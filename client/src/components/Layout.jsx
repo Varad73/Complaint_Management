@@ -1,14 +1,26 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 
 export default function Layout({ children }) {
   const location = useLocation();
+  const navigate = useNavigate(); // Hook for navigation
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  
-  // Close mobile menu when route changes
+  const [isLoggedIn, setIsLoggedIn] = useState(false); // State to track auth status
+
+  // This effect now also checks the login status whenever the route changes
   useEffect(() => {
     setIsMenuOpen(false);
+    // Check if the isLoggedIn flag is set in localStorage
+    const userIsLoggedIn = localStorage.getItem("isLoggedIn") === "true";
+    setIsLoggedIn(userIsLoggedIn);
   }, [location]);
+
+  // Function to handle user logout
+  const handleLogout = () => {
+    localStorage.removeItem("isLoggedIn"); // Remove the flag
+    setIsLoggedIn(false); // Update state
+    navigate("/login"); // Redirect to the login page
+  };
   
   // Check if a link is active
   const isActiveLink = (path) => {
@@ -37,34 +49,51 @@ export default function Layout({ children }) {
               >
                 Home
               </Link>
-              <Link 
-                className={`px-3 py-2 rounded-md transition-colors ${isActiveLink("/new") ? "bg-blue-700" : "hover:bg-blue-500"}`} 
-                to="/new"
-              >
-                New Complaint
-              </Link>
-              <Link 
-                className={`px-3 py-2 rounded-md transition-colors ${isActiveLink("/my") ? "bg-blue-700" : "hover:bg-blue-500"}`} 
-                to="/my"
-              >
-                My Complaints
-              </Link>
+              {isLoggedIn && (
+                <>
+                  <Link 
+                    className={`px-3 py-2 rounded-md transition-colors ${isActiveLink("/new") ? "bg-blue-700" : "hover:bg-blue-500"}`} 
+                    to="/new"
+                  >
+                    New Complaint
+                  </Link>
+                  <Link 
+                    className={`px-3 py-2 rounded-md transition-colors ${isActiveLink("/my") ? "bg-blue-700" : "hover:bg-blue-500"}`} 
+                    to="/my"
+                  >
+                    My Complaints
+                  </Link>
+                </>
+              )}
             </nav>
             
             {/* Auth Links - Desktop */}
             <div className="hidden md:flex items-center space-x-2">
-              <Link 
-                className={`px-3 py-2 rounded-md transition-colors ${isActiveLink("/login") ? "bg-blue-700" : "hover:bg-blue-500"}`} 
-                to="/login"
-              >
-                Login
-              </Link>
-              <Link 
-                className="px-3 py-2 rounded-md bg-white text-blue-600 font-medium hover:bg-blue-50 transition-colors" 
-                to="/signup"
-              >
-                Sign Up
-              </Link>
+              {isLoggedIn ? (
+                // If logged in, show Logout button
+                <button 
+                  onClick={handleLogout}
+                  className="px-3 py-2 rounded-md bg-white text-blue-600 font-medium hover:bg-blue-50 transition-colors"
+                >
+                  Logout
+                </button>
+              ) : (
+                // If not logged in, show Login and Sign Up links
+                <>
+                  <Link 
+                    className={`px-3 py-2 rounded-md transition-colors ${isActiveLink("/login") ? "bg-blue-700" : "hover:bg-blue-500"}`} 
+                    to="/login"
+                  >
+                    Login
+                  </Link>
+                  <Link 
+                    className="px-3 py-2 rounded-md bg-white text-blue-600 font-medium hover:bg-blue-50 transition-colors" 
+                    to="/signup"
+                  >
+                    Sign Up
+                  </Link>
+                </>
+              )}
             </div>
             
             {/* Mobile Menu Button */}
@@ -92,31 +121,48 @@ export default function Layout({ children }) {
               >
                 Home
               </Link>
-              <Link 
-                className={`block px-3 py-2 rounded-md transition-colors ${isActiveLink("/new") ? "bg-blue-700" : "hover:bg-blue-500"}`} 
-                to="/new"
-              >
-                New Complaint
-              </Link>
-              <Link 
-                className={`block px-3 py-2 rounded-md transition-colors ${isActiveLink("/my") ? "bg-blue-700" : "hover:bg-blue-500"}`} 
-                to="/my"
-              >
-                My Complaints
-              </Link>
+              {isLoggedIn && (
+                <>
+                  <Link 
+                    className={`block px-3 py-2 rounded-md transition-colors ${isActiveLink("/new") ? "bg-blue-700" : "hover:bg-blue-500"}`} 
+                    to="/new"
+                  >
+                    New Complaint
+                  </Link>
+                  <Link 
+                    className={`block px-3 py-2 rounded-md transition-colors ${isActiveLink("/my") ? "bg-blue-700" : "hover:bg-blue-500"}`} 
+                    to="/my"
+                  >
+                    My Complaints
+                  </Link>
+                </>
+              )}
               <div className="pt-2 border-t border-blue-500 mt-2">
-                <Link 
-                  className={`block px-3 py-2 rounded-md transition-colors ${isActiveLink("/login") ? "bg-blue-700" : "hover:bg-blue-500"}`} 
-                  to="/login"
-                >
-                  Login
-                </Link>
-                <Link 
-                  className="block px-3 py-2 rounded-md bg-white text-blue-600 font-medium hover:bg-blue-50 transition-colors mt-2" 
-                  to="/signup"
-                >
-                  Sign Up
-                </Link>
+                {isLoggedIn ? (
+                  // If logged in, show Logout button for mobile
+                  <button
+                    onClick={handleLogout}
+                    className="w-full text-left block px-3 py-2 rounded-md bg-white text-blue-600 font-medium hover:bg-blue-50 transition-colors mt-2" 
+                  >
+                    Logout
+                  </button>
+                ) : (
+                  // If not logged in, show Login and Sign Up links for mobile
+                  <>
+                    <Link 
+                      className={`block px-3 py-2 rounded-md transition-colors ${isActiveLink("/login") ? "bg-blue-700" : "hover:bg-blue-500"}`} 
+                      to="/login"
+                    >
+                      Login
+                    </Link>
+                    <Link 
+                      className="block px-3 py-2 rounded-md bg-white text-blue-600 font-medium hover:bg-blue-50 transition-colors mt-2" 
+                      to="/signup"
+                    >
+                      Sign Up
+                    </Link>
+                  </>
+                )}
               </div>
             </div>
           )}
