@@ -14,13 +14,12 @@ export default function MyComplaints() {
     const fetchData = async () => {
       try {
         setIsLoading(true);
-        // Fetch both complaints and departments
         const [complaintsRes, departmentsRes] = await Promise.all([
           api.get('/complaints/my'),
           api.get('/departments')
         ]);
         setAllComplaints(complaintsRes.data.list);
-        setFilteredList(complaintsRes.data.list); // Initially, show all
+        setFilteredList(complaintsRes.data.list);
         setDepartments(departmentsRes.data);
       } catch (err) {
         console.error('Error fetching data:', err);
@@ -32,7 +31,6 @@ export default function MyComplaints() {
     fetchData();
   }, []);
 
-  // ADDED: useEffect to apply filter when selection changes
   useEffect(() => {
     if (selectedFilter === 'all') {
       setFilteredList(allComplaints);
@@ -42,12 +40,28 @@ export default function MyComplaints() {
     }
   }, [selectedFilter, allComplaints]);
 
+  // MODIFIED: Implemented the status color logic for our new statuses
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'Submitted':
+        return 'bg-blue-100 text-blue-800';
+      case 'In Review':
+        return 'bg-indigo-100 text-indigo-800';
+      case 'Work in Progress':
+        return 'bg-amber-100 text-amber-800';
+      case 'Resolved':
+        return 'bg-green-100 text-green-800';
+      case 'Closed':
+        return 'bg-slate-100 text-slate-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+  
+  const formatDate = (dateString) => new Date(dateString).toLocaleDateString();
 
-  const getStatusColor = (status) => { /* ... (unchanged) ... */ };
-  const formatDate = (dateString) => { /* ... (unchanged) ... */ };
-
-  if (isLoading) { /* ... (unchanged) ... */ }
-  if (error) { /* ... (unchanged) ... */ }
+  if (isLoading) return <div className="text-center p-8">Loading complaints...</div>;
+  if (error) return <div className="text-center p-8 text-red-600">{error}</div>;
 
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
@@ -57,7 +71,6 @@ export default function MyComplaints() {
           <p className="mt-2 text-gray-600">View and manage all your submitted complaints</p>
         </div>
 
-        {/* ADDED: Filter Dropdown */}
         {allComplaints.length > 0 && (
           <div className="mb-6">
             <label htmlFor="departmentFilter" className="block text-sm font-medium text-gray-700 mb-1">Filter by Department</label>
@@ -77,15 +90,18 @@ export default function MyComplaints() {
 
         {filteredList.length === 0 ? (
           <div className="text-center py-12 bg-white rounded-lg shadow-md">
-            {/* ... (This part is mostly unchanged, but now shows if no complaints match filter) ... */}
             <h3 className="mt-4 text-lg font-medium text-gray-900">
               {selectedFilter === 'all' ? 'No complaints yet' : 'No complaints match filter'}
             </h3>
-            {/* ... */}
+            <p className="mt-1 text-sm text-gray-500">Ready to submit your first one?</p>
+            <div className="mt-6">
+              <Link to="/new" className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700">
+                Submit a New Complaint
+              </Link>
+            </div>
           </div>
         ) : (
           <div className="space-y-4">
-            {/* MODIFIED: Map over 'filteredList' instead of 'list' */}
             {filteredList.map((complaint) => (
               <div key={complaint._id} className="bg-white rounded-lg shadow-md border border-gray-200">
                 <div className="p-6">
@@ -95,14 +111,15 @@ export default function MyComplaints() {
                       {complaint.status}
                     </span>
                   </div>
-                  {/* ADDED: Display Department Name */}
                   {complaint.department && (
                     <p className="text-sm font-medium text-blue-600 mb-3">
                       Department: {complaint.department.name}
                     </p>
                   )}
                   <p className="text-gray-600 mb-4">{complaint.description}</p>
-                  {/* ... (rest of the card is unchanged) ... */}
+                   <div className="text-xs text-gray-500">
+                    Submitted on: {formatDate(complaint.createdAt)}
+                  </div>
                 </div>
               </div>
             ))}

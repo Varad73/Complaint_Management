@@ -1,10 +1,12 @@
 import React, { useState } from "react";
-import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../AuthContext"; // 1. Import useAuth
+import api from "../api"; // 2. Import your pre-configured api instance
 
 const Login = () => {
   const [formData, setFormData] = useState({ email: "", password: "" });
   const nav = useNavigate();
+  const { setUser } = useAuth(); // 3. Get the setUser function from the context
 
   const handleChange = (e) => {
     setFormData({
@@ -16,12 +18,12 @@ const Login = () => {
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.post("http://localhost:5000/api/auth/login", formData);
-      console.log("Logged in:", res.data);
-
-      alert("Login successful!");
-      localStorage.setItem("isLoggedIn", "true"); // ✅ set login flag
-      nav("/"); // ✅ redirect to home
+      const res = await api.post("/auth/login", formData); // Use the api instance
+      
+      // 4. Update the global AuthContext with the returned user data
+      setUser(res.data.user);
+      
+      nav("/"); // Redirect to home page
     } catch (err) {
       console.error(err);
       alert("Login failed! Check credentials.");
