@@ -1,22 +1,20 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { useAuth } from "../AuthContext"; // 1. Import the useAuth hook
+import { useAuth } from "../AuthContext";
 
 export default function Layout({ children }) {
   const location = useLocation();
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   
-  // 2. Get user data and functions from the AuthContext
   const { user, logout } = useAuth(); 
 
   useEffect(() => {
     setIsMenuOpen(false);
   }, [location]);
 
-  // 3. Update the logout handler
   const handleLogout = () => {
-    logout(); // Call the logout function from the context
+    logout();
     navigate("/login");
   };
   
@@ -29,31 +27,29 @@ export default function Layout({ children }) {
           <div className="flex justify-between items-center">
             <Link to="/" className="flex items-center space-x-2">
               <div className="bg-white text-blue-600 p-1 rounded-md">
-                {/* SVG Icon */}
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
               </div>
               <h1 className="text-xl font-bold">Complaint Management</h1>
             </Link>
             
-            {/* Desktop Navigation */}
             <nav className="hidden md:flex space-x-2">
               <Link className={`px-3 py-2 rounded-md transition-colors ${isActiveLink("/") ? "bg-blue-700" : "hover:bg-blue-500"}`} to="/">Home</Link>
               
-              {/* 4. Use 'user' object to determine which links to show */}
               {user && (
                 <>
                   <Link className={`px-3 py-2 rounded-md transition-colors ${isActiveLink("/new") ? "bg-blue-700" : "hover:bg-blue-500"}`} to="/new">New Complaint</Link>
                   <Link className={`px-3 py-2 rounded-md transition-colors ${isActiveLink("/my") ? "bg-blue-700" : "hover:bg-blue-500"}`} to="/my">My Complaints</Link>
                   
-                  {/* 5. ADDED: Show Admin Dashboard link only for admins */}
                   {user.role === 'admin' && (
-                     <Link className={`px-3 py-2 rounded-md transition-colors ${isActiveLink("/admin") ? "bg-blue-700" : "hover:bg-blue-500"}`} to="/admin">Admin Dashboard</Link>
+                     <>
+                        <Link className={`px-3 py-2 rounded-md transition-colors ${isActiveLink("/admin") ? "bg-blue-700" : "hover:bg-blue-500"}`} to="/admin">Admin Dashboard</Link>
+                        <Link className={`px-3 py-2 rounded-md transition-colors ${isActiveLink("/analytics") ? "bg-blue-700" : "hover:bg-blue-500"}`} to="/analytics">Analytics</Link>
+                     </>
                   )}
                 </>
               )}
             </nav>
             
-            {/* Auth Links - Desktop */}
             <div className="hidden md:flex items-center space-x-2">
               {user ? (
                 <button onClick={handleLogout} className="px-3 py-2 rounded-md bg-white text-blue-600 font-medium hover:bg-blue-50 transition-colors">Logout</button>
@@ -65,7 +61,7 @@ export default function Layout({ children }) {
               )}
             </div>
             
-            {/* Mobile Menu Button and Navigation (omitted for brevity, but update it with the same 'user' logic) */}
+            {/* Remember to add similar logic to your mobile menu if you have one */}
 
           </div>
         </div>
@@ -75,7 +71,6 @@ export default function Layout({ children }) {
         {children}
       </main>
       
-      {/* Footer (omitted for brevity) */}
     </div>
   );
 }

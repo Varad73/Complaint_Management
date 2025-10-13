@@ -5,19 +5,17 @@ import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import NewComplaint from "./pages/NewComplaint";
 import MyComplaints from "./pages/MyComplaints";
-import AdminDashboard from "./pages/AdminDashboard"; // 1. Import the new page
-import { useAuth } from "./AuthContext"; // 2. We'll create this context in the next step
+import AdminDashboard from "./pages/AdminDashboard";
+import AnalyticsDashboard from "./pages/AnalyticsDashboard"; // Import the new page
+import { useAuth } from "./AuthContext";
 
-// 3. Create a component to protect the admin route
 function AdminRoute({ children }) {
   const { user, loading } = useAuth();
 
   if (loading) {
-    return <div>Loading session...</div>; // Or a spinner
+    return <div>Loading session...</div>;
   }
 
-  // If there is a user and their role is 'admin', allow access.
-  // Otherwise, redirect them to the home page.
   return user && user.role === 'admin' ? children : <Navigate to="/" />;
 }
 
@@ -30,16 +28,22 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
           
-          {/* We can also protect these routes so only logged-in users can see them */}
           <Route path="/new" element={<NewComplaint />} />
           <Route path="/my" element={<MyComplaints />} />
 
-          {/* 4. Add the new protected route */}
           <Route
             path="/admin"
             element={
               <AdminRoute>
                 <AdminDashboard />
+              </AdminRoute>
+            }
+          />
+          <Route
+            path="/analytics"
+            element={
+              <AdminRoute>
+                <AnalyticsDashboard />
               </AdminRoute>
             }
           />
