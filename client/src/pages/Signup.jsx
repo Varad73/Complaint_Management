@@ -1,6 +1,7 @@
 import { useState } from "react";
 import api from "../api";
 import { useNavigate, Link } from "react-router-dom";
+import toast from "react-hot-toast"; // 1. Import toast
 
 export default function Signup() {
   const [name, setName] = useState("");
@@ -16,10 +17,13 @@ export default function Signup() {
     try {
       const res = await api.post("/auth/register", { name, email, password });
       console.log("Registered:", res.data);
-      alert("Signup successful! Please login with your credentials.");
+      // 2. Replace success alert with toast
+      toast.success("Signup successful! Please login with your credentials.");
       nav("/login");
     } catch (err) {
-      alert(err.response?.data?.message || "Signup failed. Please try again.");
+      // 3. Replace error alert with a specific error toast
+      const errorMessage = err.response?.data?.message || "Signup failed. Please try again.";
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }

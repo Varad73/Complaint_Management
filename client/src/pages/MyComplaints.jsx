@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import api from '../api';
 import { Link } from 'react-router-dom';
+import toast from 'react-hot-toast';
 
 const API_BASE_URL = 'http://localhost:5000';
 
@@ -11,6 +12,7 @@ export default function MyComplaints() {
   const [selectedFilter, setSelectedFilter] = useState('all');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [expandedComplaintId, setExpandedComplaintId] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -25,7 +27,9 @@ export default function MyComplaints() {
         setDepartments(departmentsRes.data);
       } catch (err) {
         console.error('Error fetching data:', err);
-        setError('Failed to load data. Please try again later.');
+        const errorMessage = err.response?.data?.message || 'Failed to load data. Please try again later.';
+        setError(errorMessage);
+        toast.error(errorMessage);
       } finally {
         setIsLoading(false);
       }
@@ -42,40 +46,67 @@ export default function MyComplaints() {
     }
   }, [selectedFilter, allComplaints]);
 
-  const handleDelete = async (complaintId) => {
-    if (window.confirm('Are you sure you want to delete this complaint? This action cannot be undone.')) {
-      try {
-        await api.delete(`/complaints/${complaintId}`);
-        setAllComplaints(prev => prev.filter(c => c._id !== complaintId));
-        setFilteredList(prev => prev.filter(c => c._id !== complaintId));
-      } catch (err) {
-        console.error('Failed to delete complaint:', err);
-        alert('Failed to delete complaint. Please try again.');
-      }
+  const handleDelete = (complaintId) => {
+    toast((t) => (
+      <div className="flex flex-col items-center gap-3">
+        <p className="font-semibold">Are you sure you want to delete this?</p>
+        <div className="flex gap-4">
+          <button
+            onClick={() => {
+              toast.dismiss(t.id);
+              confirmDelete(complaintId);
+            }}
+            className="px-4 py-1 bg-red-600 text-white rounded-md text-sm hover:bg-red-700"
+          >
+            Confirm
+          </button>
+          <button
+            onClick={() => toast.dismiss(t.id)}
+            className="px-4 py-1 bg-gray-200 text-gray-800 rounded-md text-sm hover:bg-gray-300"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    ), {
+      duration: 6000, // Make it last longer for user to decide
+    });
+  };
+
+  const confirmDelete = async (complaintId) => {
+    const deleteToast = toast.loading('Deleting complaint...');
+    try {
+      await api.delete(`/complaints/${complaintId}`);
+      toast.success('Complaint deleted successfully!', { id: deleteToast });
+      setAllComplaints(prev => prev.filter(c => c._id !== complaintId));
+      setFilteredList(prev => prev.filter(c => c._id !== complaintId));
+    } catch (err) {
+      console.error('Failed to delete complaint:', err);
+      const errorMessage = err.response?.data?.message || 'Failed to delete complaint.';
+      toast.error(errorMessage, { id: deleteToast });
     }
+  };
+  
+  const toggleHistory = (id) => {
+    setExpandedComplaintId(prevId => (prevId === id ? null : id));
   };
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'Submitted':
-        return 'bg-blue-100 text-blue-800';
-      case 'In Review':
-        return 'bg-indigo-100 text-indigo-800';
-      case 'Work in Progress':
-        return 'bg-amber-100 text-amber-800';
-      case 'Resolved':
-        return 'bg-green-100 text-green-800';
-      case 'Closed':
-        return 'bg-slate-100 text-slate-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
+      case 'Submitted': return 'bg-blue-100 text-blue-800';
+      case 'In Review': return 'bg-indigo-100 text-indigo-800';
+      case 'Work in Progress': return 'bg-amber-100 text-amber-800';
+      case 'Resolved': return 'bg-green-100 text-green-800';
+      case 'Closed': return 'bg-slate-100 text-slate-800';
+      default: return 'bg-gray-100 text-gray-800';
     }
   };
   
   const formatDate = (dateString) => new Date(dateString).toLocaleDateString();
+  const formatDateTime = (dateString) => new Date(dateString).toLocaleString();
 
   if (isLoading) return <div className="text-center p-8">Loading complaints...</div>;
-  if (error) return <div className="text-center p-8 text-red-600">{error}</div>;
+  if (error && allComplaints.length === 0) return <div className="text-center p-8 text-red-600">{error}</div>;
 
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
@@ -102,7 +133,7 @@ export default function MyComplaints() {
           </div>
         )}
 
-        {filteredList.length === 0 ? (
+        {filteredList.length === 0 && !isLoading ? (
           <div className="text-center py-12 bg-white rounded-lg shadow-md">
             <h3 className="mt-4 text-lg font-medium text-gray-900">
               {selectedFilter === 'all' ? 'No complaints yet' : 'No complaints match filter'}
@@ -144,7 +175,13 @@ export default function MyComplaints() {
                       Submitted on: {formatDate(complaint.createdAt)}
                   </div>
                 </div>
-                <div className="bg-gray-50 px-6 py-3 border-t border-gray-200 text-right">
+                <div className="bg-gray-50 px-6 py-3 border-t border-gray-200 flex justify-end items-center space-x-4">
+                  <button
+                    onClick={() => toggleHistory(complaint._id)}
+                    className="text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors"
+                  >
+                    {expandedComplaintId === complaint._id ? 'Hide History' : 'View History'}
+                  </button>
                   <button
                     onClick={() => handleDelete(complaint._id)}
                     className="text-sm font-medium text-red-600 hover:text-red-800 transition-colors"
@@ -152,6 +189,25 @@ export default function MyComplaints() {
                     Delete Complaint
                   </button>
                 </div>
+                {expandedComplaintId === complaint._id && (
+                  <div className="p-6 border-t border-gray-200 bg-gray-50">
+                    <h4 className="text-md font-semibold text-gray-800 mb-4">Complaint History</h4>
+                    <div className="space-y-4">
+                      {complaint.history && complaint.history.slice().reverse().map((entry, index) => (
+                        <div key={index} className="flex items-start">
+                          <div className="flex flex-col items-center mr-4">
+                            <div className={`w-4 h-4 rounded-full ${index === 0 ? 'bg-blue-500' : 'bg-gray-300'}`}></div>
+                            {index < complaint.history.length - 1 && <div className="w-0.5 h-10 bg-gray-300"></div>}
+                          </div>
+                          <div>
+                            <p className="font-semibold text-gray-700">{entry.status}</p>
+                            <p className="text-xs text-gray-500">{formatDateTime(entry.timestamp)}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             ))}
           </div>

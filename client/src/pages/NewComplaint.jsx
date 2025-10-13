@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import api from '../api';
 import { useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 
 export default function NewComplaint() {
   const [title, setTitle] = useState('');
@@ -10,10 +11,8 @@ export default function NewComplaint() {
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [departments, setDepartments] = useState([]);
   const [department, setDepartment] = useState('');
-
   const [image, setImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
-
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -23,7 +22,7 @@ export default function NewComplaint() {
         setDepartments(res.data);
       } catch (error) {
         console.error("Failed to fetch departments", error);
-        alert("Could not load departments. Please try again later.");
+        toast.error("Could not load departments. Please try again later.");
       }
     };
     fetchDepartments();
@@ -84,11 +83,11 @@ export default function NewComplaint() {
       }
       
       await api.post('/complaints', fd);
-      alert('Complaint submitted successfully!');
+      toast.success('Complaint submitted successfully!');
       navigate('/my');
     } catch (error) {
       console.error('Error submitting complaint:', error);
-      alert('Failed to submit complaint. Please try again.');
+      toast.error('Failed to submit complaint. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -183,7 +182,7 @@ export default function NewComplaint() {
             </div>
             
             <div>
-              {/* ... (rest of the attachments JSX is unchanged) ... */}
+              {/* Attachments section can be updated similarly if it has alerts */}
             </div>
             
             <div className="flex items-center justify-between pt-4">

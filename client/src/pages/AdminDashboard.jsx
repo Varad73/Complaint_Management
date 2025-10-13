@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, Fragment } from 'react';
 import api from '../api';
+import toast from 'react-hot-toast';
 
 const API_BASE_URL = 'http://localhost:5000';
 
@@ -29,6 +30,7 @@ export default function AdminDashboard() {
         setDepartments(res.data);
       } catch (err) {
         console.error("Failed to fetch departments", err);
+        toast.error("Could not load departments.");
       }
     };
     fetchDepartments();
@@ -43,7 +45,9 @@ export default function AdminDashboard() {
       const res = await api.get('/complaints', { params: activeFilters });
       setComplaints(res.data.all);
     } catch (err) {
-      setError('Failed to fetch complaints. You may not have admin privileges.');
+      const errorMessage = err.response?.data?.message || 'Failed to fetch complaints.';
+      setError(errorMessage);
+      toast.error(errorMessage);
       console.error(err);
     } finally {
       setLoading(false);
@@ -85,26 +89,56 @@ export default function AdminDashboard() {
     
     try {
       await api.patch(`/complaints/${selectedComplaint._id}/status`, { status: newStatus });
+      toast.success('Status updated successfully!');
       handleCloseModal();
       fetchComplaints();
     } catch (err) {
       console.error('Failed to update status:', err);
-      alert('Failed to update status. Please try again.');
+      const errorMessage = err.response?.data?.message || 'Failed to update status.';
+      toast.error(errorMessage);
     }
   };
   
-  const handleDelete = async (complaintId) => {
-    if (window.confirm('Are you sure you want to permanently delete this complaint?')) {
-      try {
-        await api.delete(`/complaints/${complaintId}`);
-        setComplaints(prev => prev.filter(c => c._id !== complaintId));
-        if (expandedRow === complaintId) {
-           setExpandedRow(null);
-        }
-      } catch (err) {
-        console.error('Failed to delete complaint:', err);
-        alert('Failed to delete complaint. Please try again.');
+  const handleDelete = (complaintId) => {
+    toast((t) => (
+      <div className="flex flex-col items-center gap-3">
+        <p className="font-semibold">Are you sure you want to delete this?</p>
+        <div className="flex gap-4">
+          <button
+            onClick={() => {
+              toast.dismiss(t.id);
+              confirmDelete(complaintId);
+            }}
+            className="px-4 py-1 bg-red-600 text-white rounded-md text-sm hover:bg-red-700"
+          >
+            Confirm
+          </button>
+          <button
+            onClick={() => toast.dismiss(t.id)}
+            className="px-4 py-1 bg-gray-200 text-gray-800 rounded-md text-sm hover:bg-gray-300"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    ), {
+      duration: 6000,
+    });
+  };
+
+  const confirmDelete = async (complaintId) => {
+    const deleteToast = toast.loading('Deleting complaint...');
+    try {
+      await api.delete(`/complaints/${complaintId}`);
+      toast.success('Complaint deleted successfully!', { id: deleteToast });
+      setComplaints(prev => prev.filter(c => c._id !== complaintId));
+      if (expandedRow === complaintId) {
+         setExpandedRow(null);
       }
+    } catch (err) {
+      console.error('Failed to delete complaint:', err);
+      const errorMessage = err.response?.data?.message || 'Failed to delete complaint.';
+      toast.error(errorMessage, { id: deleteToast });
     }
   };
   
@@ -123,7 +157,7 @@ export default function AdminDashboard() {
     setExpandedRow(expandedRow === id ? null : id);
   };
 
-  if (error) return <div className="p-8 text-center text-red-500">{error}</div>;
+  if (error && complaints.length === 0) return <div className="p-8 text-center text-red-500">{error}</div>;
 
   return (
     <>

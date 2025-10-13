@@ -1,12 +1,13 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../AuthContext"; // 1. Import useAuth
-import api from "../api"; // 2. Import your pre-configured api instance
+import { useAuth } from "../AuthContext";
+import api from "../api";
+import toast from "react-hot-toast"; // 1. Import toast
 
 const Login = () => {
   const [formData, setFormData] = useState({ email: "", password: "" });
   const nav = useNavigate();
-  const { setUser } = useAuth(); // 3. Get the setUser function from the context
+  const { setUser } = useAuth();
 
   const handleChange = (e) => {
     setFormData({
@@ -18,15 +19,19 @@ const Login = () => {
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
-      const res = await api.post("/auth/login", formData); // Use the api instance
+      const res = await api.post("/auth/login", formData);
       
-      // 4. Update the global AuthContext with the returned user data
       setUser(res.data.user);
       
-      nav("/"); // Redirect to home page
+      // 2. Add success toast
+      toast.success("Logged in successfully!");
+
+      nav("/");
     } catch (err) {
       console.error(err);
-      alert("Login failed! Check credentials.");
+      // 3. Replace alert with a more specific error toast
+      const errorMessage = err.response?.data?.message || "Login failed! Check credentials.";
+      toast.error(errorMessage);
     }
   };
 

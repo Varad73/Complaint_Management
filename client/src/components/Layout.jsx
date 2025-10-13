@@ -1,6 +1,7 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { useAuth } from "../AuthContext";
+import { Toaster } from "react-hot-toast";
 
 export default function Layout({ children }) {
   const location = useLocation();
@@ -22,6 +23,8 @@ export default function Layout({ children }) {
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
+      <Toaster position="top-center" reverseOrder={false} />
+
       <header className="bg-blue-600 text-white shadow-md">
         <div className="container mx-auto px-4 py-3">
           <div className="flex justify-between items-center">
@@ -60,9 +63,6 @@ export default function Layout({ children }) {
                 </>
               )}
             </div>
-            
-            {/* Remember to add similar logic to your mobile menu if you have one */}
-
           </div>
         </div>
       </header>
@@ -70,7 +70,7 @@ export default function Layout({ children }) {
       <main className="flex-grow container mx-auto px-4 py-6">
         {children}
       </main>
-      
     </div>
   );
 }
+
