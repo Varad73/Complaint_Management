@@ -1,5 +1,7 @@
 const router = require('express').Router();
 const multer = require('multer');
+const fs = require('fs');
+const path = require('path');
 const Complaint = require('../models/Complaint');
 const auth = require('../middleware/auth');
 
@@ -99,6 +101,44 @@ router.patch('/:id/status', auth, async (req, res) => {
       return res.status(404).json({ message: 'Complaint not found' });
     }
     res.json({ complaint: updatedComplaint });
+  } catch (e) {
+    res.status(500).json({ message: e.message });
+  }
+});
+
+router.delete('/:id', auth, async (req, res) => {
+  try {
+    const complaint = await Complaint.findById(req.params.id);
+    if (!complaint) {
+      return res.status(404).json({ message: 'Complaint not found' });
+    }
+
+    const isAdmin = req.user.role === 'admin';
+    const isOwner = complaint.user.toString() === req.user.id;
+    if (!isAdmin && !isOwner) {
+      return res.status(403).json({ message: 'Forbidden' });
+    }
+
+    const deleteFile = (filePath) => {
+      const fullPath = path.join(__dirname, '..', filePath);
+      fs.unlink(fullPath, (err) => {
+        if (err) {
+          console.error(`Failed to delete file: ${fullPath}`, err);
+        }
+      });
+    };
+
+    if (complaint.image) {
+      deleteFile(complaint.image);
+    }
+
+    if (complaint.attachments && complaint.attachments.length > 0) {
+      complaint.attachments.forEach(file => deleteFile(file));
+    }
+
+    await Complaint.findByIdAndDelete(req.params.id);
+
+    res.json({ message: 'Complaint deleted successfully' });
   } catch (e) {
     res.status(500).json({ message: e.message });
   }

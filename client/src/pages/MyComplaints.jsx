@@ -42,6 +42,19 @@ export default function MyComplaints() {
     }
   }, [selectedFilter, allComplaints]);
 
+  const handleDelete = async (complaintId) => {
+    if (window.confirm('Are you sure you want to delete this complaint? This action cannot be undone.')) {
+      try {
+        await api.delete(`/complaints/${complaintId}`);
+        setAllComplaints(prev => prev.filter(c => c._id !== complaintId));
+        setFilteredList(prev => prev.filter(c => c._id !== complaintId));
+      } catch (err) {
+        console.error('Failed to delete complaint:', err);
+        alert('Failed to delete complaint. Please try again.');
+      }
+    }
+  };
+
   const getStatusColor = (status) => {
     switch (status) {
       case 'Submitted':
@@ -104,8 +117,8 @@ export default function MyComplaints() {
         ) : (
           <div className="space-y-4">
             {filteredList.map((complaint) => (
-              <div key={complaint._id} className="bg-white rounded-lg shadow-md border border-gray-200">
-                <div className="p-6">
+              <div key={complaint._id} className="bg-white rounded-lg shadow-md border border-gray-200 flex flex-col">
+                <div className="p-6 flex-grow">
                   <div className="flex items-center justify-between mb-2">
                     <h3 className="text-lg font-semibold text-gray-900">{complaint.title}</h3>
                     <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(complaint.status)}`}>
@@ -130,6 +143,14 @@ export default function MyComplaints() {
                     <div className="text-xs text-gray-500">
                       Submitted on: {formatDate(complaint.createdAt)}
                   </div>
+                </div>
+                <div className="bg-gray-50 px-6 py-3 border-t border-gray-200 text-right">
+                  <button
+                    onClick={() => handleDelete(complaint._id)}
+                    className="text-sm font-medium text-red-600 hover:text-red-800 transition-colors"
+                  >
+                    Delete Complaint
+                  </button>
                 </div>
               </div>
             ))}

@@ -87,8 +87,24 @@ export default function AdminDashboard() {
       await api.patch(`/complaints/${selectedComplaint._id}/status`, { status: newStatus });
       handleCloseModal();
       fetchComplaints();
-    } catch (err)      {console.error('Failed to update status:', err);
+    } catch (err) {
+      console.error('Failed to update status:', err);
       alert('Failed to update status. Please try again.');
+    }
+  };
+  
+  const handleDelete = async (complaintId) => {
+    if (window.confirm('Are you sure you want to permanently delete this complaint?')) {
+      try {
+        await api.delete(`/complaints/${complaintId}`);
+        setComplaints(prev => prev.filter(c => c._id !== complaintId));
+        if (expandedRow === complaintId) {
+           setExpandedRow(null);
+        }
+      } catch (err) {
+        console.error('Failed to delete complaint:', err);
+        alert('Failed to delete complaint. Please try again.');
+      }
     }
   };
   
@@ -181,12 +197,18 @@ export default function AdminDashboard() {
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{new Date(c.createdAt).toLocaleDateString()}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm space-x-4">
                           <button
                             onClick={() => handleOpenModal(c)}
                             className="text-indigo-600 hover:text-indigo-900 font-medium"
                           >
                             Update Status
+                          </button>
+                          <button
+                            onClick={() => handleDelete(c._id)}
+                            className="text-red-600 hover:text-red-900 font-medium"
+                          >
+                            Delete
                           </button>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm">
