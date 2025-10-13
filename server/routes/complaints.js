@@ -7,26 +7,38 @@ const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, 'uploads/'),
   filename: (req, file, cb) => cb(null, Date.now() + '-' + file.originalname)
 });
+
 const upload = multer({ storage, limits: { fileSize: 5 * 1024 * 1024 } });
 
-router.post('/', auth, upload.array('attachments', 5), async (req, res) => {
-  try {
-    const { title, description, department } = req.body;
-    const files = (req.files || []).map(f => `/uploads/${f.filename}`);
-    
-    const complaint = await Complaint.create({ 
-      title, 
-      description, 
-      department, 
-      user: req.user.id, 
-      attachments: files,
-      history: [{ status: 'Submitted' }]
-    });
-    res.status(201).json({ complaint });
-  } catch (e) {
-    res.status(500).json({ message: e.message });
+router.post(
+  '/', 
+  auth, 
+  upload.fields([
+    { name: 'image', maxCount: 1 },
+    { name: 'attachments', maxCount: 5 }
+  ]), 
+  async (req, res) => {
+    try {
+      const { title, description, department } = req.body;
+
+      const imagePath = req.files.image ? `/uploads/${req.files.image[0].filename}` : null;
+      const attachmentPaths = req.files.attachments ? req.files.attachments.map(f => `/uploads/${f.filename}`) : [];
+      
+      const complaint = await Complaint.create({ 
+        title, 
+        description, 
+        department, 
+        user: req.user.id, 
+        image: imagePath,
+        attachments: attachmentPaths,
+        history: [{ status: 'Submitted' }]
+      });
+      res.status(201).json({ complaint });
+    } catch (e) {
+      res.status(500).json({ message: e.message });
+    }
   }
-});
+);
 
 router.get('/my', auth, async (req, res) => {
   const list = await Complaint.find({ user: req.user.id })

@@ -2,11 +2,13 @@ import { useEffect, useState } from 'react';
 import api from '../api';
 import { Link } from 'react-router-dom';
 
+const API_BASE_URL = 'http://localhost:5000';
+
 export default function MyComplaints() {
-  const [allComplaints, setAllComplaints] = useState([]); // Holds the original full list
-  const [filteredList, setFilteredList] = useState([]); // Holds the list for display
-  const [departments, setDepartments] = useState([]); // Holds departments for the filter
-  const [selectedFilter, setSelectedFilter] = useState('all'); // Tracks the current filter
+  const [allComplaints, setAllComplaints] = useState([]); 
+  const [filteredList, setFilteredList] = useState([]); 
+  const [departments, setDepartments] = useState([]); 
+  const [selectedFilter, setSelectedFilter] = useState('all');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -40,7 +42,6 @@ export default function MyComplaints() {
     }
   }, [selectedFilter, allComplaints]);
 
-  // MODIFIED: Implemented the status color logic for our new statuses
   const getStatusColor = (status) => {
     switch (status) {
       case 'Submitted':
@@ -116,9 +117,18 @@ export default function MyComplaints() {
                       Department: {complaint.department.name}
                     </p>
                   )}
+                  {complaint.image && (
+                    <div className="my-4">
+                      <img 
+                        src={`${API_BASE_URL}${complaint.image}`} 
+                        alt="Complaint attachment" 
+                        className="rounded-lg max-h-80 w-auto object-cover border shadow-sm"
+                      />
+                    </div>
+                  )}
                   <p className="text-gray-600 mb-4">{complaint.description}</p>
-                   <div className="text-xs text-gray-500">
-                    Submitted on: {formatDate(complaint.createdAt)}
+                    <div className="text-xs text-gray-500">
+                      Submitted on: {formatDate(complaint.createdAt)}
                   </div>
                 </div>
               </div>

@@ -1,5 +1,7 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, Fragment } from 'react';
 import api from '../api';
+
+const API_BASE_URL = 'http://localhost:5000';
 
 export default function AdminDashboard() {
   const [complaints, setComplaints] = useState([]);
@@ -16,6 +18,7 @@ export default function AdminDashboard() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedComplaint, setSelectedComplaint] = useState(null);
   const [newStatus, setNewStatus] = useState('');
+  const [expandedRow, setExpandedRow] = useState(null);
   
   const statusOptions = ['Submitted', 'In Review', 'Work in Progress', 'Resolved', 'Closed'];
   
@@ -84,8 +87,7 @@ export default function AdminDashboard() {
       await api.patch(`/complaints/${selectedComplaint._id}/status`, { status: newStatus });
       handleCloseModal();
       fetchComplaints();
-    } catch (err) {
-      console.error('Failed to update status:', err);
+    } catch (err)      {console.error('Failed to update status:', err);
       alert('Failed to update status. Please try again.');
     }
   };
@@ -99,6 +101,10 @@ export default function AdminDashboard() {
       case 'Closed': return 'bg-slate-100 text-slate-800';
       default: return 'bg-gray-100 text-gray-800';
     }
+  };
+  
+  const toggleRow = (id) => {
+    setExpandedRow(expandedRow === id ? null : id);
   };
 
   if (error) return <div className="p-8 text-center text-red-500">{error}</div>;
@@ -159,32 +165,60 @@ export default function AdminDashboard() {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Submitted</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Details</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {complaints.length > 0 ? complaints.map((c) => (
-                    <tr key={c._id}>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{c.user?.name || 'N/A'}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{c.department?.name || 'N/A'}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{c.title}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(c.status)}`}>
-                          {c.status}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{new Date(c.createdAt).toLocaleDateString()}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        <button
-                          onClick={() => handleOpenModal(c)}
-                          className="text-indigo-600 hover:text-indigo-900 font-medium"
-                        >
-                          Update Status
-                        </button>
-                      </td>
-                    </tr>
+                    <Fragment key={c._id}>
+                      <tr>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{c.user?.name || 'N/A'}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{c.department?.name || 'N/A'}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{c.title}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm">
+                          <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(c.status)}`}>
+                            {c.status}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{new Date(c.createdAt).toLocaleDateString()}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm">
+                          <button
+                            onClick={() => handleOpenModal(c)}
+                            className="text-indigo-600 hover:text-indigo-900 font-medium"
+                          >
+                            Update Status
+                          </button>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm">
+                          <button onClick={() => toggleRow(c._id)} className="text-blue-600 hover:text-blue-900 font-medium">
+                            {expandedRow === c._id ? 'Hide' : 'View'}
+                          </button>
+                        </td>
+                      </tr>
+                      {expandedRow === c._id && (
+                        <tr className="bg-gray-50">
+                          <td colSpan="7" className="px-6 py-4">
+                            <div className="text-sm text-gray-800">
+                              <p className="font-semibold">Description:</p>
+                              <p className="mb-4">{c.description}</p>
+                              {c.image && (
+                                <div>
+                                  <p className="font-semibold mb-2">Image:</p>
+                                  <img 
+                                    src={`${API_BASE_URL}${c.image}`} 
+                                    alt="Complaint attachment" 
+                                    className="rounded-lg max-h-80 w-auto object-cover border shadow-sm"
+                                  />
+                                </div>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </Fragment>
                   )) : (
                     <tr>
-                      <td colSpan="6" className="text-center py-8 text-gray-500">No complaints match the current filters.</td>
+                      <td colSpan="7" className="text-center py-8 text-gray-500">No complaints match the current filters.</td>
                     </tr>
                   )}
                 </tbody>
@@ -228,4 +262,3 @@ export default function AdminDashboard() {
     </>
   );
 }
-
