@@ -7,8 +7,8 @@ export default function Layout({ children }) {
   const location = useLocation();
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  
-  const { user, logout } = useAuth(); 
+
+  const { user, logout } = useAuth();
 
   useEffect(() => {
     setIsMenuOpen(false);
@@ -18,14 +18,15 @@ export default function Layout({ children }) {
     logout();
     navigate("/login");
   };
-  
+
   const isActiveLink = (path) => location.pathname === path;
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       <Toaster position="top-center" reverseOrder={false} />
 
-      <header className="bg-blue-600 text-white shadow-md">
+      {/* Fixed Header */}
+      <header className="fixed top-0 left-0 right-0 z-50 bg-blue-600 text-white shadow-md">
         <div className="container mx-auto px-4 py-3">
           <div className="flex justify-between items-center">
             <Link to="/" className="flex items-center space-x-2">
@@ -34,25 +35,25 @@ export default function Layout({ children }) {
               </div>
               <h1 className="text-xl font-bold">Complaint Management</h1>
             </Link>
-            
+
             <nav className="hidden md:flex space-x-2">
               <Link className={`px-3 py-2 rounded-md transition-colors ${isActiveLink("/") ? "bg-blue-700" : "hover:bg-blue-500"}`} to="/">Home</Link>
-              
+
               {user && (
                 <>
                   <Link className={`px-3 py-2 rounded-md transition-colors ${isActiveLink("/new") ? "bg-blue-700" : "hover:bg-blue-500"}`} to="/new">New Complaint</Link>
                   <Link className={`px-3 py-2 rounded-md transition-colors ${isActiveLink("/my") ? "bg-blue-700" : "hover:bg-blue-500"}`} to="/my">My Complaints</Link>
-                  
+
                   {user.role === 'admin' && (
-                     <>
-                        <Link className={`px-3 py-2 rounded-md transition-colors ${isActiveLink("/admin") ? "bg-blue-700" : "hover:bg-blue-500"}`} to="/admin">Admin Dashboard</Link>
-                        <Link className={`px-3 py-2 rounded-md transition-colors ${isActiveLink("/analytics") ? "bg-blue-700" : "hover:bg-blue-500"}`} to="/analytics">Analytics</Link>
-                     </>
+                    <>
+                      <Link className={`px-3 py-2 rounded-md transition-colors ${isActiveLink("/admin") ? "bg-blue-700" : "hover:bg-blue-500"}`} to="/admin">Admin Dashboard</Link>
+                      <Link className={`px-3 py-2 rounded-md transition-colors ${isActiveLink("/analytics") ? "bg-blue-700" : "hover:bg-blue-500"}`} to="/analytics">Analytics</Link>
+                    </>
                   )}
                 </>
               )}
             </nav>
-            
+
             <div className="hidden md:flex items-center space-x-2">
               {user ? (
                 <button onClick={handleLogout} className="px-3 py-2 rounded-md bg-white text-blue-600 font-medium hover:bg-blue-50 transition-colors">Logout</button>
@@ -67,10 +68,10 @@ export default function Layout({ children }) {
         </div>
       </header>
 
-      <main className="flex-grow container mx-auto px-4 py-6">
+      {/* Main content with top padding to account for fixed header */}
+      <main className="flex-grow pt-20 overflow-hidden">
         {children}
       </main>
     </div>
   );
 }
-
