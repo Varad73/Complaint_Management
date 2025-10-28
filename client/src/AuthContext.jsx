@@ -26,9 +26,10 @@ export function AuthProvider({ children }) {
 
   const logout = async () => {
     // We can also add an API call here to invalidate the cookie on the server
+    await api.post('/auth/logout');
     setUser(null);
   };
-  
+
   // The value includes the user, loading state, setUser for login, and logout
   const value = { user, loading, setUser, logout };
 

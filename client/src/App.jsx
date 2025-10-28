@@ -9,11 +9,35 @@ import AdminDashboard from "./pages/AdminDashboard";
 import AnalyticsDashboard from "./pages/AnalyticsDashboard"; // Import the new page
 import { useAuth } from "./AuthContext";
 
+function ProtectedRoute({ children }) {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600 font-medium">Loading session...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return user ? children : <Navigate to="/login" />;
+}
+
 function AdminRoute({ children }) {
   const { user, loading } = useAuth();
 
   if (loading) {
-    return <div>Loading session...</div>;
+    return (
+      <div className="h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600 font-medium">Loading session...</p>
+        </div>
+      </div>
+    );
   }
 
   return user && user.role === 'admin' ? children : <Navigate to="/" />;
@@ -27,9 +51,23 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
-          
-          <Route path="/new" element={<NewComplaint />} />
-          <Route path="/my" element={<MyComplaints />} />
+
+          <Route
+            path="/new"
+            element={
+              <ProtectedRoute>
+                <NewComplaint />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/my"
+            element={
+              <ProtectedRoute>
+                <MyComplaints />
+              </ProtectedRoute>
+            }
+          />
 
           <Route
             path="/admin"
