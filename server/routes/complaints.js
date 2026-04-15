@@ -4,60 +4,71 @@ const fs = require('fs');
 const path = require('path');
 const Complaint = require('../models/Complaint');
 const auth = require('../middleware/auth');
+const { analyzeComplaint, suggestDepartment } = require('../utils/aiHelper');
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, 'uploads/'),
   filename: (req, file, cb) => cb(null, Date.now() + '-' + file.originalname)
 });
-
 const upload = multer({ storage, limits: { fileSize: 5 * 1024 * 1024 } });
 
-// --- EXISTING ROUTES (NO CHANGES) ---
-
-router.post(
-  '/', 
-  auth, 
-  upload.fields([
-    { name: 'image', maxCount: 1 },
-    { name: 'attachments', maxCount: 5 }
-  ]), 
-  async (req, res) => {
-    try {
-      const { title, description, department } = req.body;
-      const imagePath = req.files.image ? `/uploads/${req.files.image[0].filename}` : null;
-      const attachmentPaths = req.files.attachments ? req.files.attachments.map(f => `/uploads/${f.filename}`) : [];
-      
-      const complaint = await Complaint.create({ 
-        title, 
-        description, 
-        department, 
-        user: req.user.id, 
-        image: imagePath,
-        attachments: attachmentPaths,
-        history: [{ status: 'Submitted' }]
-      });
-      res.status(201).json({ complaint });
-    } catch (e) {
-      res.status(500).json({ message: e.message });
+// --- CREATE COMPLAINT (with AI & department suggestion) ---
+router.post('/', auth, upload.single('image'), async (req, res) => {
+  try {
+    const { title, description, department } = req.body;
+    
+    // AI analysis
+    const { priority, sentiment } = analyzeComplaint(title, description);
+    const suggestedDept = suggestDepartment(title, description);
+    
+    const complaint = new Complaint({
+      title,
+      description,
+      department,
+      user: req.user.id,
+      priority,
+      sentiment,
+      history: [{ status: 'Submitted', timestamp: new Date() }]
+    });
+    
+    if (req.file) {
+      complaint.image = '/uploads/' + req.file.filename;
     }
+    
+    await complaint.save();
+    res.status(201).json({
+      message: 'Complaint created',
+      complaint,
+      suggestedDept   // send suggestion to frontend
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Server error' });
   }
-);
-
-router.get('/my', auth, async (req, res) => {
-  const list = await Complaint.find({ user: req.user.id })
-    .populate('department', 'name')
-    .sort({ createdAt: -1 });
-  res.json({ list });
 });
 
+// --- GET USER'S OWN COMPLAINTS ---
+router.get('/my', auth, async (req, res) => {
+  try {
+    const list = await Complaint.find({ user: req.user.id })
+      .populate('department', 'name')
+      .sort({ createdAt: -1 });
+    res.json({ list });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// --- GET ALL COMPLAINTS (ADMIN ONLY) ---
 router.get('/', auth, async (req, res) => {
   if (req.user.role !== 'admin') return res.status(403).json({ message: 'Forbidden' });
   try {
-    const { search, status, department } = req.query;
+    const { search, status, department, priority } = req.query;
     const filter = {};
     if (search) filter.title = { $regex: search, $options: 'i' };
     if (status) filter.status = status;
     if (department) filter.department = department;
+    if (priority) filter.priority = priority;
 
     const all = await Complaint.find(filter)
       .populate('user', 'name email')
@@ -69,13 +80,11 @@ router.get('/', auth, async (req, res) => {
   }
 });
 
-// --- NEW ANALYTICS ROUTE ---
-
+// --- ANALYTICS STATS (ADMIN ONLY) ---
 router.get('/stats', auth, async (req, res) => {
   if (req.user.role !== 'admin') {
     return res.status(403).json({ message: 'Forbidden' });
   }
-
   try {
     const [complaintsByStatus, complaintsByDepartment, resolutionTime] = await Promise.all([
       Complaint.aggregate([
@@ -118,23 +127,22 @@ router.get('/stats', auth, async (req, res) => {
       complaintsByDepartment,
       averageResolutionTime: avgResolutionHours
     });
-
   } catch (e) {
     res.status(500).json({ message: 'Error fetching stats: ' + e.message });
   }
 });
 
-
+// --- UPDATE COMPLAINT STATUS (ADMIN ONLY) ---
 router.patch('/:id/status', auth, async (req, res) => {
   if (req.user.role !== 'admin') return res.status(403).json({ message: 'Forbidden' });
   try {
     const { status } = req.body;
     const updatedComplaint = await Complaint.findByIdAndUpdate(
-      req.params.id, 
-      { 
-        $set: { status }, 
-        $push: { history: { status: status } } 
-      }, 
+      req.params.id,
+      {
+        $set: { status, updatedAt: Date.now() },
+        $push: { history: { status: status, timestamp: new Date() } }
+      },
       { new: true }
     );
     if (!updatedComplaint) return res.status(404).json({ message: 'Complaint not found' });
@@ -144,6 +152,7 @@ router.patch('/:id/status', auth, async (req, res) => {
   }
 });
 
+// --- DELETE COMPLAINT (ADMIN or OWNER) ---
 router.delete('/:id', auth, async (req, res) => {
   try {
     const complaint = await Complaint.findById(req.params.id);
