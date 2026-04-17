@@ -10,22 +10,22 @@ const departmentRoutes = require('./routes/departments');
 
 const app = express();
 
+// ✅ CORS (FIXED)
+app.use(cors({
+  origin: [
+    'http://localhost:5173',
+    'http://localhost:3000',
+    'https://complaint-management-murex.vercel.app' // ❗ NO trailing /
+  ],
+  credentials: true
+}));
+
 // ✅ Middleware
 app.use(express.json());
 app.use(cookieParser());
 app.use('/uploads', express.static('uploads'));
 
-// ✅ CORS (IMPORTANT - works for both local + deployed)
-app.use(cors({
-  origin: [
-    'http://localhost:5173',   // Vite local frontend (your case)
-    'http://localhost:3000',   // fallback (if needed)
-    'https://complaint-management-murex.vercel.app/' // 🔥 replace with your real Vercel URL
-  ],
-  credentials: true
-}));
-
-// ✅ MongoDB connection
+// ✅ MongoDB
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log('MongoDB connected'))
   .catch(err => console.error(err));
@@ -35,7 +35,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/complaints', complaintRoutes);
 app.use('/api/departments', departmentRoutes);
 
-// ✅ Root route (optional but useful)
+// ✅ Test route
 app.get('/', (req, res) => {
   res.send('API is running...');
 });
