@@ -21,7 +21,7 @@ const Login = () => {
     e.preventDefault();
     setIsLoading(true);
     try {
-      const res = await api.post("/auth/login", formData);
+      const res = await api.post("/api/auth/login", formData);
       setUser(res.data.user);
       toast.success("Welcome back! 🎉");
       nav("/");
