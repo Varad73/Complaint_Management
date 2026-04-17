@@ -20,7 +20,7 @@ app.use(cors({
   origin: [
     'http://localhost:5173',   // Vite local frontend (your case)
     'http://localhost:3000',   // fallback (if needed)
-    'https://your-app.vercel.app' // 🔥 replace with your real Vercel URL
+    'https://complaint-management-murex.vercel.app/' // 🔥 replace with your real Vercel URL
   ],
   credentials: true
 }));
