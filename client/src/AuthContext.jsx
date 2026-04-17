@@ -11,7 +11,7 @@ export function AuthProvider({ children }) {
     const fetchUser = async () => {
       try {
         // The '/api/auth/me' endpoint will verify the cookie and return the user
-        const res = await api.get('/auth/me');
+        const res = await api.get('/api/auth/me');
         setUser(res.data.user);
       } catch (error) {
         // This is expected if the user is not logged in
