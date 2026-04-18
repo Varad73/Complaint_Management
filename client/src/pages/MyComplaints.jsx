@@ -3,8 +3,7 @@ import api from '../api';
 import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 
-const API_BASE_URL = 'http://localhost:5000';
-
+const API_BASE_URL = 'https://complaint-management-1j73.onrender.com';
 const getPriorityBadge = (priority) => {
   const badges = {
     high: { bg: 'bg-red-100', text: 'text-red-800', label: '🔴 High Priority', icon: '⚠️' },
