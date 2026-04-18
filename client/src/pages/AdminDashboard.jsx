@@ -38,7 +38,7 @@ export default function AdminDashboard() {
   useEffect(() => {
     const fetchDepartments = async () => {
       try {
-        const res = await api.get('/departments');
+        const res = await api.get("/api/departments") ;
         setDepartments(res.data);
       } catch (err) {
         toast.error("Could not load departments");
