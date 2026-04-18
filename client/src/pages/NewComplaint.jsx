@@ -52,7 +52,7 @@ export default function NewComplaint() {
   useEffect(() => {
     const fetchDepartments = async () => {
       try {
-        const res = await api.get('/api/departments');
+        const res = await api.get('/departments');
         setDepartments(res.data);
       } catch (error) {
         toast.error("Could not load departments");
@@ -154,7 +154,7 @@ export default function NewComplaint() {
       fd.append('department', formData.department);
       if (image) fd.append('image', image);
 
-      await api.post('/api/complaints', fd);
+      await api.post('/complaints', fd);
       toast.success('Complaint submitted successfully!');
       navigate('/my');
     } catch (error) {
