@@ -31,9 +31,9 @@ mongoose.connect(process.env.MONGO_URI)
   .catch(err => console.error(err));
 
 // ✅ Routes
-app.use('/auth', authRoutes);
-app.use('/complaints', complaintRoutes);
-app.use('/departments', departmentRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/complaints', complaintRoutes);
+app.use('/api/departments', departmentRoutes);
 
 // ✅ Test route
 app.get('/', (req, res) => {
