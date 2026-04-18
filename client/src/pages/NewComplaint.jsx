@@ -49,17 +49,22 @@ export default function NewComplaint() {
   
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const fetchDepartments = async () => {
-      try {
-        const res = await api.get('/departments');
-        setDepartments(res.data);
-      } catch (error) {
-        toast.error("Could not load departments");
-      }
-    };
-    fetchDepartments();
-  }, []);
+useEffect(() => {
+  console.log("Fetching departments..."); // 👈 ADD
+
+  const fetchDepartments = async () => {
+    try {
+      const res = await api.get('/departments');
+      console.log("Departments:", res.data); // 👈 ADD
+      setDepartments(res.data);
+    } catch (error) {
+      console.log("Error:", error); // 👈 ADD
+      toast.error("Could not load departments");
+    }
+  };
+
+  fetchDepartments();
+}, []);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
