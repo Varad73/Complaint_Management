@@ -10,13 +10,9 @@ const departmentRoutes = require('./routes/departments');
 
 const app = express();
 
-// ✅ CORS (FIXED)
+// ✅ CORS (FINAL FIX FOR COOKIES)
 app.use(cors({
-  origin: [
-    'http://localhost:5173',
-    'http://localhost:3000',
-    'https://complaint-management-murex.vercel.app' // ❗ NO trailing /
-  ],
+  origin: "https://complaint-management-murex.vercel.app", // ❗ exact frontend URL
   credentials: true
 }));
 
@@ -30,7 +26,7 @@ mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log('MongoDB connected'))
   .catch(err => console.error(err));
 
-// ✅ Routes
+// ✅ Routes (WITH /api PREFIX)
 app.use('/api/auth', authRoutes);
 app.use('/api/complaints', complaintRoutes);
 app.use('/api/departments', departmentRoutes);
