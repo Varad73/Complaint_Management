@@ -20,8 +20,10 @@ if (missing.length) {
 
 const app = express();
 
-// ✅ Security headers
-app.use(helmet());
+// ✅ Security headers (allow cross-origin for uploaded images)
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: 'cross-origin' }
+}));
 
 // ✅ Rate limiting
 const limiter = rateLimit({
