@@ -6,11 +6,34 @@ const Complaint = require('../models/Complaint');
 const auth = require('../middleware/auth');
 const { analyzeComplaint, suggestDepartment } = require('../utils/aiHelper');
 
+const ALLOWED_MIMES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, 'uploads/'),
   filename: (req, file, cb) => cb(null, Date.now() + '-' + file.originalname)
 });
-const upload = multer({ storage, limits: { fileSize: 5 * 1024 * 1024 } });
+const upload = multer({
+  storage,
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    if (ALLOWED_MIMES.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Invalid file type. Only JPEG, PNG, GIF, and WebP are allowed.'));
+    }
+  }
+});
+
+// --- SUGGEST DEPARTMENT (AI) ---
+router.post('/suggest-department', auth, (req, res) => {
+  try {
+    const { title, description } = req.body;
+    const department = suggestDepartment(title, description);
+    res.json({ department });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
 
 // --- CREATE COMPLAINT (with AI & department suggestion) ---
 router.post('/', auth, upload.single('image'), async (req, res) => {

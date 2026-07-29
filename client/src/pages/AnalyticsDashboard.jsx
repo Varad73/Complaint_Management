@@ -28,8 +28,6 @@ export default function AnalyticsDashboard() {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [timeRange, setTimeRange] = useState('all');
-
   useEffect(() => {
     document.title = 'SmartGrievance - Analytics';
     const fetchStats = async () => {
@@ -99,30 +97,8 @@ export default function AnalyticsDashboard() {
   const resolvedCount = stats.complaintsByStatus?.find(s => s.status === 'Resolved')?.count || 0;
   const resolutionRate = totalComplaints > 0 ? ((resolvedCount / totalComplaints) * 100).toFixed(1) : 0;
 
-  const filterDataByTimeRange = (data) => {
-    if (timeRange === 'all' || !data) return data;
-    const now = new Date();
-    let cutoff;
-    if (timeRange === 'week') {
-      cutoff = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-    } else if (timeRange === 'month') {
-      cutoff = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-    } else {
-      return data;
-    }
-    return data.filter(item => {
-      const date = item.createdAt || item.date;
-      return date && new Date(date) >= cutoff;
-    });
-  };
-
-  const filteredStatusData = timeRange === 'all'
-    ? stats.complaintsByStatus
-    : stats.complaintsByStatus;
-
-  const filteredDeptData = timeRange === 'all'
-    ? stats.complaintsByDepartment
-    : stats.complaintsByDepartment;
+  const statusData = stats.complaintsByStatus;
+  const deptData = stats.complaintsByDepartment;
 
   return (
     <div className="transition-colors">
@@ -132,29 +108,6 @@ export default function AnalyticsDashboard() {
           Analytics Dashboard
         </h1>
         <p className="text-gray-600 dark:text-gray-400 mt-2">Comprehensive insights and performance metrics</p>
-      </div>
-
-      {/* Time Range Selector */}
-      <div className="mb-6 flex justify-end">
-        <div className="inline-flex bg-gray-100 dark:bg-gray-700 rounded-xl p-1 transition-colors">
-          {[
-            { key: 'all', label: 'All Time' },
-            { key: 'week', label: 'This Week' },
-            { key: 'month', label: 'This Month' },
-          ].map(({ key, label }) => (
-            <button
-              key={key}
-              onClick={() => setTimeRange(key)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                timeRange === key
-                  ? 'bg-white dark:bg-gray-800 text-blue-600 shadow-sm'
-                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-              }`}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
       </div>
 
       {/* Key Metrics Cards */}
@@ -232,9 +185,9 @@ export default function AnalyticsDashboard() {
               </svg>
             </div>
           </div>
-          {filteredDeptData && filteredDeptData.length > 0 ? (
+          {deptData && deptData.length > 0 ? (
             <ResponsiveContainer width="100%" height={350}>
-              <BarChart data={filteredDeptData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+              <BarChart data={deptData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
                 <XAxis
                   dataKey="department"
@@ -287,11 +240,11 @@ export default function AnalyticsDashboard() {
               </svg>
             </div>
           </div>
-          {filteredStatusData && filteredStatusData.length > 0 ? (
+          {statusData && statusData.length > 0 ? (
             <ResponsiveContainer width="100%" height={350}>
               <PieChart>
                 <Pie
-                  data={filteredStatusData}
+                  data={statusData}
                   cx="50%"
                   cy="50%"
                   labelLine={true}
@@ -303,7 +256,7 @@ export default function AnalyticsDashboard() {
                   animationDuration={1500}
                   animationBegin={300}
                 >
-                  {filteredStatusData.map((entry, index) => (
+                  {statusData.map((entry, index) => (
                     <Cell
                       key={`cell-${index}`}
                       fill={STATUS_COLORS[entry.status]?.chart || CHART_COLORS[index % CHART_COLORS.length]}
@@ -324,7 +277,7 @@ export default function AnalyticsDashboard() {
                 <Legend
                   wrapperStyle={{ paddingTop: '20px' }}
                   formatter={(value) => {
-                    const data = filteredStatusData.find(item => item.status === value);
+                    const data = statusData.find(item => item.status === value);
                     return `${value}: ${data?.count || 0}`;
                   }}
                 />

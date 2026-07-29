@@ -3,34 +3,6 @@ import api from '../api';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 
-function suggestDepartmentClient(title, description) {
-  const text = (title + ' ' + description).toLowerCase();
-
-  const deptKeywords = {
-    'Sewage Management': [
-      'sewage', 'drain', 'drainage', 'sewer', 'blocked', 'clogged', 'overflow', 'wastewater',
-      'toilet', 'manhole', 'pipe burst', 'smell', 'stagnant water', 'flooding', 'sump'
-    ],
-    'Road Maintenance': [
-      'road', 'pothole', 'street', 'asphalt', 'pavement', 'crack', 'speed bump',
-      'footpath', 'sidewalk', 'bridge', 'culvert', 'traffic signal', 'signboard',
-      'streetlight', 'road safety', 'accident', 'speed breaker'
-    ],
-    'Electricity': [
-      'electricity', 'power', 'voltage', 'wire', 'pole', 'transformer', 'fuse', 'trip',
-      'outage', 'blackout', 'shock', 'electrical', 'meter', 'bill', 'street light',
-      'light not working', 'sparking', 'earthing'
-    ]
-  };
-
-  for (const [dept, keywords] of Object.entries(deptKeywords)) {
-    if (keywords.some(kw => text.includes(kw))) {
-      return dept;
-    }
-  }
-  return null;
-}
-
 const DESCRIPTION_MAX = 1000;
 
 export default function NewComplaint() {
@@ -63,18 +35,26 @@ export default function NewComplaint() {
     if (name === 'department') setAiSuggestion(null);
   };
 
-  const getAiSuggestion = () => {
+  const getAiSuggestion = async () => {
     if (!formData.title && !formData.description) {
       toast.error('Please enter a title or description first');
       return;
     }
-    const suggested = suggestDepartmentClient(formData.title, formData.description);
-    if (suggested) {
-      setAiSuggestion(suggested);
-      toast.success(`AI suggests: ${suggested}`, { icon: '\u{1F916}' });
-    } else {
-      setAiSuggestion(null);
-      toast.error('Could not detect department. Please select manually.', { icon: '\u{1F50D}' });
+    try {
+      const res = await api.post('/complaints/suggest-department', {
+        title: formData.title,
+        description: formData.description
+      });
+      const suggested = res.data.department;
+      if (suggested) {
+        setAiSuggestion(suggested);
+        toast.success(`AI suggests: ${suggested}`, { icon: '\u{1F916}' });
+      } else {
+        setAiSuggestion(null);
+        toast.error('Could not detect department. Please select manually.', { icon: '\u{1F50D}' });
+      }
+    } catch {
+      toast.error('Failed to get AI suggestion');
     }
   };
 

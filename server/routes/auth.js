@@ -22,11 +22,12 @@ router.post('/register', async (req, res) => {
       { expiresIn: '7d' }
     );
 
-    // ✅ FIXED COOKIE
+    // ✅ COOKIE (secure only in production)
+    const isProduction = process.env.NODE_ENV === 'production';
     res.cookie('token', token, {
       httpOnly: true,
-      sameSite: 'None',   // 🔥 REQUIRED
-      secure: true        // 🔥 REQUIRED
+      sameSite: isProduction ? 'None' : 'Lax',
+      secure: isProduction
     });
 
     res.json({
@@ -55,11 +56,12 @@ router.post('/login', async (req, res) => {
       { expiresIn: '7d' }
     );
 
-    // ✅ FIXED COOKIE
+    // ✅ COOKIE (secure only in production)
+    const isProduction = process.env.NODE_ENV === 'production';
     res.cookie('token', token, {
       httpOnly: true,
-      sameSite: 'None',
-      secure: true
+      sameSite: isProduction ? 'None' : 'Lax',
+      secure: isProduction
     });
 
     res.json({
