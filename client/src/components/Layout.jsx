@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "../AuthContext";
 import { useTheme } from "../ThemeContext";
 import { Toaster } from "react-hot-toast";
+import ChatBot from "./ChatBot";
 
 export default function Layout({ children }) {
   const location = useLocation();
@@ -262,6 +263,8 @@ export default function Layout({ children }) {
           </div>
         </div>
       </footer>
+
+      <ChatBot />
     </div>
   );
 }
