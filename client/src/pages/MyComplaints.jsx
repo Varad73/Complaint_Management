@@ -12,25 +12,25 @@ import {
 
 function SkeletonCard() {
   return (
-    <div className="bg-white rounded-2xl shadow-sm overflow-hidden animate-pulse">
+    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm overflow-hidden animate-pulse">
       <div className="p-6">
         <div className="flex items-start justify-between mb-4">
           <div className="flex-1">
-            <div className="h-6 bg-gray-200 rounded w-2/3 mb-3"></div>
-            <div className="h-4 bg-gray-200 rounded w-1/4"></div>
+            <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-2/3 mb-3"></div>
+            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/4"></div>
           </div>
           <div className="flex gap-2">
-            <div className="h-6 bg-gray-200 rounded-full w-20"></div>
-            <div className="h-6 bg-gray-200 rounded-full w-24"></div>
+            <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded-full w-20"></div>
+            <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded-full w-24"></div>
           </div>
         </div>
         <div className="space-y-2 mb-4">
-          <div className="h-4 bg-gray-200 rounded w-full"></div>
-          <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-full"></div>
+          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
         </div>
-        <div className="pt-4 border-t flex justify-between">
-          <div className="h-4 bg-gray-200 rounded w-1/3"></div>
-          <div className="h-4 bg-gray-200 rounded w-1/4"></div>
+        <div className="pt-4 border-t border-gray-200 dark:border-gray-700 flex justify-between">
+          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/3"></div>
+          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/4"></div>
         </div>
       </div>
     </div>
@@ -119,8 +119,8 @@ export default function MyComplaints() {
     return (
       <div>
         <div className="mb-8">
-          <div className="h-8 bg-gray-200 rounded w-48 mb-2 animate-pulse"></div>
-          <div className="h-4 bg-gray-200 rounded w-64 animate-pulse"></div>
+          <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-48 mb-2 animate-pulse"></div>
+          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-64 animate-pulse"></div>
         </div>
         <div className="grid gap-6">
           {[1, 2, 3].map(i => <SkeletonCard key={i} />)}
@@ -135,7 +135,7 @@ export default function MyComplaints() {
         <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
           My Complaints
         </h1>
-        <p className="text-gray-600 mt-2">Track and manage all your submitted complaints</p>
+        <p className="text-gray-600 dark:text-gray-400 mt-2">Track and manage all your submitted complaints</p>
       </div>
 
       {allComplaints.length > 0 && (
@@ -151,13 +151,13 @@ export default function MyComplaints() {
               placeholder="Search by title or description..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
             />
           </div>
           <select
             value={selectedFilter}
             onChange={(e) => setSelectedFilter(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+            className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
           >
             <option value="all">All Departments</option>
             {departments.map(dept => (
@@ -167,7 +167,7 @@ export default function MyComplaints() {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+            className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
           >
             <option value="all">All Statuses</option>
             {STATUS_OPTIONS.map(s => (
@@ -177,7 +177,7 @@ export default function MyComplaints() {
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+            className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
           >
             <option value="newest">Newest First</option>
             <option value="oldest">Oldest First</option>
@@ -187,16 +187,16 @@ export default function MyComplaints() {
       )}
 
       {filteredList.length === 0 ? (
-        <div className="text-center py-16 bg-white rounded-2xl shadow-sm">
-          <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+        <div className="text-center py-16 bg-white dark:bg-gray-800 rounded-2xl shadow-sm">
+          <div className="w-20 h-20 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
             <svg className="w-10 h-10 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
             </svg>
           </div>
-          <h3 className="text-xl font-semibold text-gray-900 mb-2">
+          <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
             {allComplaints.length === 0 ? 'No complaints yet' : 'No matching complaints'}
           </h3>
-          <p className="text-gray-600 mb-6">
+          <p className="text-gray-600 dark:text-gray-400 mb-6">
             {allComplaints.length === 0
               ? 'Ready to submit your first complaint?'
               : 'Try adjusting your filters or search query.'}
@@ -218,13 +218,13 @@ export default function MyComplaints() {
             const sentimentBadge = complaint.sentiment ? getSentimentBadge(complaint.sentiment) : null;
 
             return (
-              <div key={complaint._id} className="bg-white rounded-2xl shadow-sm hover:shadow-md transition-shadow overflow-hidden">
+              <div key={complaint._id} className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm hover:shadow-md transition-shadow overflow-hidden">
                 <div className="p-6">
                   <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
                     <div className="flex-1 min-w-0">
-                      <h3 className="text-xl font-semibold text-gray-900 mb-2 break-words">{complaint.title}</h3>
+                      <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2 break-words">{complaint.title}</h3>
                       {complaint.department && (
-                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-700">
+                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300">
                           {complaint.department.name}
                         </span>
                       )}
@@ -236,7 +236,8 @@ export default function MyComplaints() {
                       </div>
 
                       {priorityBadge && (
-                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${priorityBadge.bg} ${priorityBadge.text}`}>
+                        <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${priorityBadge.bg} ${priorityBadge.text}`}>
+                          <div className={`w-2 h-2 rounded-full ${priorityBadge.dot}`}></div>
                           {priorityBadge.label}
                         </span>
                       )}
@@ -249,7 +250,7 @@ export default function MyComplaints() {
                     </div>
                   </div>
 
-                  <p className="text-gray-700 mb-4 line-clamp-2">{complaint.description}</p>
+                  <p className="text-gray-700 dark:text-gray-300 mb-4 line-clamp-2">{complaint.description}</p>
 
                   {complaint.image && (
                     <div className="mb-4">
@@ -261,14 +262,14 @@ export default function MyComplaints() {
                     </div>
                   )}
 
-                  <div className="flex items-center justify-between pt-4 border-t">
-                    <div className="text-sm text-gray-500">
+                  <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
+                    <div className="text-sm text-gray-500 dark:text-gray-400">
                       Submitted: {new Date(complaint.createdAt).toLocaleDateString()}
                     </div>
                     <div className="flex space-x-3">
                       <button
                         onClick={() => setExpandedComplaintId(expandedComplaintId === complaint._id ? null : complaint._id)}
-                        className="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center gap-1"
+                        className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 text-sm font-medium flex items-center gap-1"
                       >
                         <svg className={`w-4 h-4 transition-transform ${expandedComplaintId === complaint._id ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -277,7 +278,7 @@ export default function MyComplaints() {
                       </button>
                       <button
                         onClick={() => handleDelete(complaint._id)}
-                        className="text-red-600 hover:text-red-700 text-sm font-medium"
+                        className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 text-sm font-medium"
                       >
                         Delete
                       </button>
@@ -285,17 +286,17 @@ export default function MyComplaints() {
                   </div>
 
                   {expandedComplaintId === complaint._id && complaint.history && (
-                    <div className="mt-4 pt-4 border-t">
-                      <h4 className="font-semibold text-gray-900 mb-3">Timeline</h4>
+                    <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                      <h4 className="font-semibold text-gray-900 dark:text-white mb-3">Timeline</h4>
                       <div className="relative ml-2">
-                        <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-gray-200"></div>
+                        <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-gray-200 dark:bg-gray-700"></div>
                         <div className="space-y-4">
                           {complaint.history.slice().reverse().map((entry, idx) => (
                             <div key={idx} className="flex items-start space-x-4 relative">
-                              <div className="flex-shrink-0 w-3 h-3 rounded-full bg-blue-500 ring-4 ring-white relative z-10 mt-1"></div>
+                              <div className="flex-shrink-0 w-3 h-3 rounded-full bg-blue-500 ring-4 ring-white dark:ring-gray-800 relative z-10 mt-1"></div>
                               <div>
-                                <p className="font-medium text-gray-900">{entry.status}</p>
-                                <p className="text-sm text-gray-500">{new Date(entry.timestamp).toLocaleString()}</p>
+                                <p className="font-medium text-gray-900 dark:text-white">{entry.status}</p>
+                                <p className="text-sm text-gray-500 dark:text-gray-400">{new Date(entry.timestamp).toLocaleString()}</p>
                               </div>
                             </div>
                           ))}

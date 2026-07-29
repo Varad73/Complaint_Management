@@ -11,15 +11,15 @@ export const STATUS_COLORS = {
 };
 
 export const PRIORITY_BADGES = {
-  high: { bg: 'bg-red-100', text: 'text-red-800', label: '\u{1F534} High Priority' },
-  medium: { bg: 'bg-yellow-100', text: 'text-yellow-800', label: '\u{1F7E1} Medium Priority' },
-  low: { bg: 'bg-green-100', text: 'text-green-800', label: '\u{1F7E2} Low Priority' },
+  high: { bg: 'bg-red-100', text: 'text-red-800', label: 'High Priority', dot: 'bg-red-500' },
+  medium: { bg: 'bg-yellow-100', text: 'text-yellow-800', label: 'Medium Priority', dot: 'bg-yellow-500' },
+  low: { bg: 'bg-green-100', text: 'text-green-800', label: 'Low Priority', dot: 'bg-green-500' },
 };
 
 export const SENTIMENT_BADGES = {
-  Negative: { bg: 'bg-orange-100', text: 'text-orange-800', label: '\u{1F620} Negative' },
-  Neutral: { bg: 'bg-gray-100', text: 'text-gray-800', label: '\u{1F610} Neutral' },
-  Positive: { bg: 'bg-blue-100', text: 'text-blue-800', label: '\u{1F60A} Positive' },
+  Negative: { bg: 'bg-orange-100', text: 'text-orange-800', label: 'Negative' },
+  Neutral: { bg: 'bg-gray-100', text: 'text-gray-800', label: 'Neutral' },
+  Positive: { bg: 'bg-blue-100', text: 'text-blue-800', label: 'Positive' },
 };
 
 export const CHART_COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899'];
