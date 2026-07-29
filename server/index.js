@@ -11,8 +11,21 @@ const departmentRoutes = require('./routes/departments');
 const app = express();
 
 // ✅ CORS (FINAL FIX FOR COOKIES)
+const allowedOrigins = [
+  "https://complaint-management-murex.vercel.app",
+  "http://localhost:5000",
+  "http://localhost:5173",
+  "http://localhost:5174",
+];
+
 app.use(cors({
-  origin: "https://complaint-management-murex.vercel.app", // ❗ exact frontend URL
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin) || origin.startsWith("http://localhost:")) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
   credentials: true
 }));
 
@@ -37,5 +50,5 @@ app.get('/', (req, res) => {
 });
 
 // ✅ Start server
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

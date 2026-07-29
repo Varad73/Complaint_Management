@@ -1,24 +1,37 @@
 import { useState, useEffect } from 'react';
 import api from '../api';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
+import { useTheme } from '../ThemeContext';
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
+  PieChart, Pie, Cell
+} from 'recharts';
+import { STATUS_COLORS, CHART_COLORS } from '../constants';
 
-const STATUS_COLORS = {
-  'Submitted': '#3B82F6',
-  'In Review': '#F59E0B',
-  'Work in Progress': '#F97316',
-  'Resolved': '#10B981',
-  'Closed': '#6B7280'
-};
-
-const CHART_COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899'];
+function SkeletonCard({ className = '' }) {
+  return (
+    <div className={`bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6 animate-pulse transition-colors ${className}`}>
+      <div className="flex items-center justify-between mb-6">
+        <div className="space-y-2">
+          <div className="h-5 bg-gray-200 dark:bg-gray-600 rounded w-40"></div>
+          <div className="h-3 bg-gray-200 dark:bg-gray-600 rounded w-32"></div>
+        </div>
+        <div className="w-10 h-10 bg-gray-200 dark:bg-gray-600 rounded-lg"></div>
+      </div>
+      <div className="h-64 bg-gray-100 dark:bg-gray-700 rounded-lg"></div>
+    </div>
+  );
+}
 
 export default function AnalyticsDashboard() {
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [timeRange, setTimeRange] = useState('week');
+  const [timeRange, setTimeRange] = useState('all');
 
   useEffect(() => {
+    document.title = 'SmartGrievance - Analytics';
     const fetchStats = async () => {
       try {
         setLoading(true);
@@ -37,10 +50,30 @@ export default function AnalyticsDashboard() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading analytics data...</p>
+      <div>
+        <div className="mb-8">
+          <div className="h-8 bg-gray-200 dark:bg-gray-600 rounded w-56 mb-2 animate-pulse"></div>
+          <div className="h-4 bg-gray-200 dark:bg-gray-600 rounded w-72 animate-pulse"></div>
+        </div>
+        <div className="mb-6 flex justify-end">
+          <div className="h-10 bg-gray-200 dark:bg-gray-600 rounded-xl w-48 animate-pulse"></div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          {[1, 2, 3, 4].map(i => (
+            <div key={i} className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6 animate-pulse transition-colors">
+              <div className="flex items-center justify-between">
+                <div className="space-y-2">
+                  <div className="h-3 bg-gray-200 dark:bg-gray-600 rounded w-24"></div>
+                  <div className="h-8 bg-gray-200 dark:bg-gray-600 rounded w-16"></div>
+                </div>
+                <div className="w-12 h-12 bg-gray-200 dark:bg-gray-600 rounded-xl"></div>
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <SkeletonCard />
+          <SkeletonCard />
         </div>
       </div>
     );
@@ -49,44 +82,76 @@ export default function AnalyticsDashboard() {
   if (error) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="text-center">
-          <div className="text-6xl mb-4">📊</div>
-          <h3 className="text-xl font-semibold text-gray-900 mb-2">Unable to Load Analytics</h3>
-          <p className="text-red-500">{error}</p>
+        <div className="text-center max-w-md">
+          <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg className="w-10 h-10 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+            </svg>
+          </div>
+          <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">Unable to Load Analytics</h3>
+          <p className="text-gray-600 dark:text-gray-400">{error}</p>
         </div>
       </div>
     );
   }
 
-  // Calculate additional metrics
   const totalComplaints = stats.complaintsByStatus?.reduce((sum, item) => sum + item.count, 0) || 0;
-  const resolutionRate = stats.averageResolutionTime ? 
-    ((stats.complaintsByStatus?.find(s => s.status === 'Resolved')?.count || 0) / totalComplaints * 100).toFixed(1) : 0;
+  const resolvedCount = stats.complaintsByStatus?.find(s => s.status === 'Resolved')?.count || 0;
+  const resolutionRate = totalComplaints > 0 ? ((resolvedCount / totalComplaints) * 100).toFixed(1) : 0;
+
+  const filterDataByTimeRange = (data) => {
+    if (timeRange === 'all' || !data) return data;
+    const now = new Date();
+    let cutoff;
+    if (timeRange === 'week') {
+      cutoff = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    } else if (timeRange === 'month') {
+      cutoff = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    } else {
+      return data;
+    }
+    return data.filter(item => {
+      const date = item.createdAt || item.date;
+      return date && new Date(date) >= cutoff;
+    });
+  };
+
+  const filteredStatusData = timeRange === 'all'
+    ? stats.complaintsByStatus
+    : stats.complaintsByStatus;
+
+  const filteredDeptData = timeRange === 'all'
+    ? stats.complaintsByDepartment
+    : stats.complaintsByDepartment;
 
   return (
-    <div>
+    <div className="transition-colors">
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
           Analytics Dashboard
         </h1>
-        <p className="text-gray-600 mt-2">Comprehensive insights and performance metrics</p>
+        <p className="text-gray-600 dark:text-gray-400 mt-2">Comprehensive insights and performance metrics</p>
       </div>
 
       {/* Time Range Selector */}
       <div className="mb-6 flex justify-end">
-        <div className="inline-flex bg-gray-100 rounded-xl p-1">
-          {['week', 'month', 'year'].map((range) => (
+        <div className="inline-flex bg-gray-100 dark:bg-gray-700 rounded-xl p-1 transition-colors">
+          {[
+            { key: 'all', label: 'All Time' },
+            { key: 'week', label: 'This Week' },
+            { key: 'month', label: 'This Month' },
+          ].map(({ key, label }) => (
             <button
-              key={range}
-              onClick={() => setTimeRange(range)}
+              key={key}
+              onClick={() => setTimeRange(key)}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                timeRange === range
-                  ? 'bg-white text-blue-600 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900'
+                timeRange === key
+                  ? 'bg-white dark:bg-gray-800 text-blue-600 shadow-sm'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
               }`}
             >
-              {range.charAt(0).toUpperCase() + range.slice(1)}
+              {label}
             </button>
           ))}
         </div>
@@ -94,12 +159,11 @@ export default function AnalyticsDashboard() {
 
       {/* Key Metrics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <div className="bg-white rounded-2xl shadow-sm p-6 border-l-4 border-blue-500 hover:shadow-md transition-shadow">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6 border-l-4 border-blue-500 hover:shadow-md transition-shadow transition-colors">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500">Total Complaints</p>
-              <p className="text-3xl font-bold text-gray-900">{totalComplaints}</p>
-              <p className="text-xs text-green-600 mt-1">+12% from last month</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Total Complaints</p>
+              <p className="text-3xl font-bold text-gray-900 dark:text-white">{totalComplaints}</p>
             </div>
             <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
               <svg className="w-6 h-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -109,12 +173,11 @@ export default function AnalyticsDashboard() {
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-sm p-6 border-l-4 border-green-500 hover:shadow-md transition-shadow">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6 border-l-4 border-green-500 hover:shadow-md transition-shadow transition-colors">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500">Resolution Rate</p>
-              <p className="text-3xl font-bold text-gray-900">{resolutionRate}%</p>
-              <p className="text-xs text-green-600 mt-1">+5% improvement</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Resolution Rate</p>
+              <p className="text-3xl font-bold text-gray-900 dark:text-white">{resolutionRate}%</p>
             </div>
             <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
               <svg className="w-6 h-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -124,12 +187,12 @@ export default function AnalyticsDashboard() {
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-sm p-6 border-l-4 border-orange-500 hover:shadow-md transition-shadow">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6 border-l-4 border-orange-500 hover:shadow-md transition-shadow transition-colors">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500">Avg. Resolution Time</p>
-              <p className="text-3xl font-bold text-gray-900">{stats.averageResolutionTime || 0}</p>
-              <p className="text-xs text-gray-600 mt-1">Hours</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Avg. Resolution Time</p>
+              <p className="text-3xl font-bold text-gray-900 dark:text-white">{stats.averageResolutionTime || 'N/A'}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{stats.averageResolutionTime ? 'Hours' : 'No data'}</p>
             </div>
             <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center">
               <svg className="w-6 h-6 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -139,12 +202,11 @@ export default function AnalyticsDashboard() {
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-sm p-6 border-l-4 border-purple-500 hover:shadow-md transition-shadow">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6 border-l-4 border-purple-500 hover:shadow-md transition-shadow transition-colors">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500">Active Departments</p>
-              <p className="text-3xl font-bold text-gray-900">{stats.complaintsByDepartment?.length || 0}</p>
-              <p className="text-xs text-gray-600 mt-1">Across organization</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Active Departments</p>
+              <p className="text-3xl font-bold text-gray-900 dark:text-white">{stats.complaintsByDepartment?.length || 0}</p>
             </div>
             <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
               <svg className="w-6 h-6 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -158,11 +220,11 @@ export default function AnalyticsDashboard() {
       {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
         {/* Bar Chart - Complaints by Department */}
-        <div className="bg-white rounded-2xl shadow-sm p-6 hover:shadow-md transition-shadow">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6 hover:shadow-md transition-shadow transition-colors">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h3 className="text-lg font-semibold text-gray-900">Complaints by Department</h3>
-              <p className="text-sm text-gray-500 mt-1">Distribution across departments</p>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Complaints by Department</h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Distribution across departments</p>
             </div>
             <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
               <svg className="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -170,48 +232,54 @@ export default function AnalyticsDashboard() {
               </svg>
             </div>
           </div>
-          <ResponsiveContainer width="100%" height={350}>
-            <BarChart data={stats.complaintsByDepartment} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
-              <XAxis 
-                dataKey="department" 
-                tick={{ fill: '#6B7280', fontSize: 12 }}
-                axisLine={{ stroke: '#E5E7EB' }}
-              />
-              <YAxis 
-                allowDecimals={false}
-                tick={{ fill: '#6B7280', fontSize: 12 }}
-                axisLine={{ stroke: '#E5E7EB' }}
-              />
-              <Tooltip 
-                contentStyle={{ 
-                  backgroundColor: 'white', 
-                  borderRadius: '8px', 
-                  border: '1px solid #E5E7EB',
-                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-                }}
-              />
-              <Legend 
-                wrapperStyle={{ paddingTop: '20px' }}
-                formatter={(value) => <span className="text-sm text-gray-600">{value}</span>}
-              />
-              <Bar 
-                dataKey="count" 
-                fill="#3B82F6" 
-                name="Number of Complaints"
-                radius={[8, 8, 0, 0]}
-                animationDuration={1500}
-              />
-            </BarChart>
-          </ResponsiveContainer>
+          {filteredDeptData && filteredDeptData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={350}>
+              <BarChart data={filteredDeptData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
+                <XAxis
+                  dataKey="department"
+                  tick={{ fill: '#6B7280', fontSize: 12 }}
+                  axisLine={{ stroke: '#E5E7EB' }}
+                />
+                <YAxis
+                  allowDecimals={false}
+                  tick={{ fill: '#6B7280', fontSize: 12 }}
+                  axisLine={{ stroke: '#E5E7EB' }}
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: isDark ? '#1f2937' : 'white',
+                    borderRadius: '8px',
+                    border: isDark ? '1px solid #374151' : '1px solid #E5E7EB',
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                  }}
+                />
+                <Legend
+                  wrapperStyle={{ paddingTop: '20px' }}
+                  formatter={(value) => <span className="text-sm text-gray-600 dark:text-gray-400">{value}</span>}
+                />
+                <Bar
+                  dataKey="count"
+                  fill="#3B82F6"
+                  name="Number of Complaints"
+                  radius={[8, 8, 0, 0]}
+                  animationDuration={1500}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="h-64 flex items-center justify-center text-gray-400">
+              <p>No department data available</p>
+            </div>
+          )}
         </div>
 
         {/* Pie Chart - Complaints by Status */}
-        <div className="bg-white rounded-2xl shadow-sm p-6 hover:shadow-md transition-shadow">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6 hover:shadow-md transition-shadow transition-colors">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h3 className="text-lg font-semibold text-gray-900">Complaints by Status</h3>
-              <p className="text-sm text-gray-500 mt-1">Current status distribution</p>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Complaints by Status</h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Current status distribution</p>
             </div>
             <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
               <svg className="w-5 h-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -219,78 +287,84 @@ export default function AnalyticsDashboard() {
               </svg>
             </div>
           </div>
-          <ResponsiveContainer width="100%" height={350}>
-            <PieChart>
-              <Pie
-                data={stats.complaintsByStatus}
-                cx="50%"
-                cy="50%"
-                labelLine={true}
-                outerRadius={120}
-                fill="#8884d8"
-                dataKey="count"
-                nameKey="status"
-                label={({ status, percent }) => `${status}: ${(percent * 100).toFixed(0)}%`}
-                animationDuration={1500}
-                animationBegin={300}
-              >
-                {stats.complaintsByStatus.map((entry, index) => (
-                  <Cell 
-                    key={`cell-${index}`} 
-                    fill={STATUS_COLORS[entry.status] || CHART_COLORS[index % CHART_COLORS.length]}
-                    stroke="white"
-                    strokeWidth={2}
-                  />
-                ))}
-              </Pie>
-              <Tooltip 
-                contentStyle={{ 
-                  backgroundColor: 'white', 
-                  borderRadius: '8px', 
-                  border: '1px solid #E5E7EB',
-                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-                }}
-                formatter={(value, name, props) => [`${value} complaints`, props.payload.status]}
-              />
-              <Legend 
-                wrapperStyle={{ paddingTop: '20px' }}
-                formatter={(value, entry) => {
-                  const data = stats.complaintsByStatus.find(item => item.status === value);
-                  return `${value}: ${data?.count || 0}`;
-                }}
-              />
-            </PieChart>
-          </ResponsiveContainer>
+          {filteredStatusData && filteredStatusData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={350}>
+              <PieChart>
+                <Pie
+                  data={filteredStatusData}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={true}
+                  outerRadius={120}
+                  fill="#8884d8"
+                  dataKey="count"
+                  nameKey="status"
+                  label={({ status, percent }) => `${status}: ${(percent * 100).toFixed(0)}%`}
+                  animationDuration={1500}
+                  animationBegin={300}
+                >
+                  {filteredStatusData.map((entry, index) => (
+                    <Cell
+                      key={`cell-${index}`}
+                      fill={STATUS_COLORS[entry.status]?.chart || CHART_COLORS[index % CHART_COLORS.length]}
+                      stroke="white"
+                      strokeWidth={2}
+                    />
+                  ))}
+                </Pie>
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: isDark ? '#1f2937' : 'white',
+                    borderRadius: '8px',
+                    border: isDark ? '1px solid #374151' : '1px solid #E5E7EB',
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                  }}
+                  formatter={(value, name, props) => [`${value} complaints`, props.payload.status]}
+                />
+                <Legend
+                  wrapperStyle={{ paddingTop: '20px' }}
+                  formatter={(value) => {
+                    const data = filteredStatusData.find(item => item.status === value);
+                    return `${value}: ${data?.count || 0}`;
+                  }}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="h-64 flex items-center justify-center text-gray-400">
+              <p>No status data available</p>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Additional Insights Section */}
+      {/* Summary Section */}
       <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl shadow-lg p-8 text-white">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div className="text-center">
             <div className="text-4xl font-bold mb-2">
-              {stats.averageResolutionTime < 24 ? 'Fast' : 'Standard'}
+              {stats.averageResolutionTime && stats.averageResolutionTime < 24 ? 'Fast' : stats.averageResolutionTime ? 'Standard' : 'N/A'}
             </div>
             <div className="text-blue-100">Response Speed</div>
             <div className="text-sm text-blue-200 mt-2">
-              Average {stats.averageResolutionTime} hours resolution time
+              {stats.averageResolutionTime
+                ? `Average ${stats.averageResolutionTime} hours resolution time`
+                : 'No resolution time data yet'}
             </div>
           </div>
-          
+
           <div className="text-center border-l border-r border-blue-500">
             <div className="text-4xl font-bold mb-2">
               {stats.complaintsByDepartment?.length || 0}
             </div>
             <div className="text-blue-100">Active Departments</div>
             <div className="text-sm text-blue-200 mt-2">
-              Handling complaints efficiently
+              Handling complaints across the organization
             </div>
           </div>
-          
+
           <div className="text-center">
-            <div className="text-4xl font-bold mb-2">
-              {((stats.complaintsByStatus?.find(s => s.status === 'Resolved')?.count || 0) / totalComplaints * 100).toFixed(0)}%
-            </div>
+            <div className="text-4xl font-bold mb-2">{resolutionRate}%</div>
             <div className="text-blue-100">Success Rate</div>
             <div className="text-sm text-blue-200 mt-2">
               Complaints resolved successfully
@@ -299,20 +373,20 @@ export default function AnalyticsDashboard() {
         </div>
       </div>
 
-      {/* Recommendation/Insight Card */}
+      {/* Insight Card */}
       {stats.complaintsByDepartment && stats.complaintsByDepartment.length > 0 && (
-        <div className="mt-8 bg-yellow-50 border border-yellow-200 rounded-2xl p-6">
+        <div className="mt-8 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-2xl p-6 transition-colors">
           <div className="flex items-start space-x-4">
-            <div className="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center flex-shrink-0">
-              <svg className="w-5 h-5 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div className="w-10 h-10 bg-yellow-100 dark:bg-yellow-900/40 rounded-lg flex items-center justify-center flex-shrink-0">
+              <svg className="w-5 h-5 text-yellow-600 dark:text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
             <div>
-              <h4 className="font-semibold text-gray-900 mb-1">Insight</h4>
-              <p className="text-gray-700">
-                {stats.complaintsByDepartment[0]?.department} department has the highest number of complaints 
-                ({stats.complaintsByDepartment[0]?.count}). Consider reviewing processes in this department 
+              <h4 className="font-semibold text-gray-900 dark:text-white mb-1">Insight</h4>
+              <p className="text-gray-700 dark:text-gray-300">
+                <strong>{stats.complaintsByDepartment[0]?.department}</strong> department has the highest number of complaints
+                ({stats.complaintsByDepartment[0]?.count}). Consider reviewing processes in this department
                 to identify areas for improvement.
               </p>
             </div>
